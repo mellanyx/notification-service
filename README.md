@@ -1,66 +1,154 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# 📬 Notification Service (Laravel + RabbitMQ + MySQL)
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+Простой сервис уведомлений, реализованный на **Laravel (PHP 8.4)** с использованием **RabbitMQ** и **MySQL**.  
+Сервис позволяет сохранять уведомления в базу данных двумя способами:
+1. Через очередь RabbitMQ (консьюмер обрабатывает сообщения).
+2. Через HTTP API (`POST /notifications`).
 
-## About Laravel
+Также предусмотрен эндпоинт для получения списка уведомлений (`GET /notifications`).
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+---
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+## 🚀 Возможности
+- Приём уведомлений через RabbitMQ
+- Приём уведомлений через HTTP API
+- Хранение уведомлений в MySQL
+- Просмотр списка всех уведомлений через REST API
+- Docker-окружение для быстрого запуска
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+---
 
-## Learning Laravel
+## 📂 Структура проекта
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+```
+├── app/
+│ ├── Console/Commands/ConsumeNotifications.php # Консьюмер RabbitMQ
+│ ├── Console/Commands/SendNotifications.php # Сендер уведомления в RabbitMQ
+│ ├── Http/Controllers/NotificationController.php # Контроллер API
+│ ├── Models/Notification.php # Модель
+├── database/migrations/xxxx_create_notifications_table.php
+├── docker-compose.yml
+├── Dockerfile
+├── README.md
+└── ...
+```
 
-You may also try the [Laravel Bootcamp](https://bootcamp.laravel.com), where you will be guided through building a modern Laravel application from scratch.
+---
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+## ⚙️ Установка и запуск
 
-## Laravel Sponsors
+### 1. Клонирование репозитория
+```bash
+git clone https://github.com/your-repo/notification-service.git
+cd notification-service
+```
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+### 2. Запуск Docker-контейнеров
+```bash
+docker-compose up -d --build
+```
 
-### Premium Partners
+### 3. Выполнение миграций
+```bash
+docker exec -it notification-service-app php artisan migrate
+```
 
-- **[Vehikl](https://vehikl.com/)**
-- **[Tighten Co.](https://tighten.co)**
-- **[WebReinvent](https://webreinvent.com/)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel/)**
-- **[Cyber-Duck](https://cyber-duck.co.uk)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Jump24](https://jump24.co.uk)**
-- **[Redberry](https://redberry.international/laravel/)**
-- **[Active Logic](https://activelogic.com)**
-- **[byte5](https://byte5.de)**
-- **[OP.GG](https://op.gg)**
+### 4. Генерация ключа приложения
+```bash
+docker exec -it notification-service-app php artisan key:generate
+```
 
-## Contributing
+---
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+## 🔌 API
 
-## Code of Conduct
+### Создание уведомления
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+POST /api/notifications
 
-## Security Vulnerabilities
+Пример запроса:
+```json
+{
+    "sender_email": "test@test.com",
+    "recipient_email": "user@mail.com",
+    "message": "Hello!"
+}
+```
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+Ответ (201):
+```json
+{
+    "sender_email": "hello@example.com",
+    "recipient_email": "test@mail.ru",
+    "message": "message",
+    "updated_at": "2025-10-02T18:38:35.000000Z",
+    "created_at": "2025-10-02T18:38:35.000000Z",
+    "id": 1
+}
+```
 
-## License
+### Получение списка уведомлений
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+GET /api/notifications
+
+Ответ (200):
+```json
+[
+    {
+        "id": 1,
+        "sender_email": "hello@example.com",
+        "recipient_email": "test@mail.ru",
+        "message": "Test_1",
+        "created_at": "2025-10-02T08:32:51.000000Z",
+        "updated_at": "2025-10-02T08:32:51.000000Z"
+    },
+    {
+        "id": 2,
+        "sender_email": "hello@example.com",
+        "recipient_email": "test@mail.ru",
+        "message": "Test_2",
+        "created_at": "2025-10-02T18:38:35.000000Z",
+        "updated_at": "2025-10-02T18:38:35.000000Z"
+    },
+    {
+        "id": 3,
+        "sender_email": "hello@example.com",
+        "recipient_email": "test@mail.ru",
+        "message": "Test_3",
+        "created_at": "2025-10-02T18:42:44.000000Z",
+        "updated_at": "2025-10-02T18:42:44.000000Z"
+    }
+]
+```
+
+---
+
+## 🐇 RabbitMQ
+
+### 1. Запуск консьюмера
+```bash
+docker exec -it notification-service-app php artisan notification:consume
+```
+
+### 2. Отправка сообщения в очередь
+```bash
+docker exec -it notification-service-app php artisan notification:send {msg} {recipient_email}
+```
+
+---
+
+## 🔗 Сервисы
+
+* Laravel API → http://localhost:8000/api/notifications
+* RabbitMQ UI → http://localhost:15672
+(guest/guest)
+* MySQL → localhost:33077 (user: laravel, password: secret)
+
+---
+
+## 🛠 Стек
+
+* PHP 8.4 / Laravel
+* MySQL 8
+* RabbitMQ 3 (management)
+* Docker / Docker Compose

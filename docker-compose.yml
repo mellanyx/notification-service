@@ -1,0 +1,53 @@
+name: notification-service
+services:
+    app:
+        build:
+            context: .
+            dockerfile: Dockerfile
+        container_name: notification-service-app
+        volumes:
+            - .:/var/www/html
+        ports:
+            - "8000:8000"
+        depends_on:
+            - mysql
+            - rabbitmq
+        networks:
+            - notification_service_network
+
+    mysql:
+        image: mysql:8.0
+        container_name: notification-service-mysql
+        restart: always
+        environment:
+            MYSQL_DATABASE: notification_service
+            MYSQL_USER: laravel
+            MYSQL_PASSWORD: secret
+            MYSQL_ROOT_PASSWORD: root
+        ports:
+            - "33077:3306"
+        volumes:
+            - db_data:/var/lib/mysql
+        networks:
+            - notification_service_network
+
+    rabbitmq:
+        image: rabbitmq:3-management
+        container_name: notification-service-rabbitmq
+        restart: always
+        ports:
+            - "5672:5672" # API
+            - "15672:15672" # UI
+        environment:
+            RABBITMQ_DEFAULT_USER: guest
+            RABBITMQ_DEFAULT_PASS: guest
+        networks:
+            - notification_service_network
+
+volumes:
+    db_data:
+
+networks:
+    notification_service_network:
+        name: 'notification_service_network'
+        driver: bridge
